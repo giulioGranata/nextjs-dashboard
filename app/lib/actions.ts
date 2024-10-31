@@ -35,3 +35,26 @@ export async function createInvoice(formData: FormData) {
   revalidatePath("/dashboard/invoices");
   redirect("/dashboard/invoices");
 }
+
+const UpdateInvoice = FormSchema.omit({ id: true, date: true });
+
+export async function updateInvoice(id: string, formData: FormData) {
+  const rawFormData = Object.fromEntries(formData.entries());
+
+  const { customerId, amount, status } = UpdateInvoice.parse({
+    customerId: rawFormData.customerId,
+    amount: Number(rawFormData.amount),
+    status: rawFormData.status,
+  });
+
+  const amountInCents = amount * 100;
+
+  await sql`
+    UPDATE invoices
+    SET customer_id = ${customerId}, amount = ${amountInCents}, status = ${status}
+    WHERE id = ${id}
+  `;
+
+  revalidatePath("/dashboard/invoices");
+  redirect("/dashboard/invoices");
+}
